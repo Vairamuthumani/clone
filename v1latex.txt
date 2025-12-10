@@ -1,0 +1,610 @@
+\documentclass[numeric,Afour,times,sageh]{sagej}
+
+% \usepackage[style=ieee,backend=biber]{biblatex} % use biblatex with IEEE style
+% \addbibresource{example_bib.bib}
+
+\usepackage{parskip}
+\usepackage{moreverb,url}
+\usepackage[colorlinks,bookmarksopen,bookmarksnumbered,citecolor=red,urlcolor=red]{hyperref}
+\usepackage{amsmath,graphicx}
+\usepackage{microtype}
+\usepackage[justification=centering]{caption}
+\usepackage{float}
+\usepackage{cite}
+
+
+\newcommand\BibTeX{{\rmfamily B\kern-.05em \textsc{i\kern-.025em b}\kern-.08em
+T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\def\volumeyear{2025}
+
+\begin{document}
+
+
+\runninghead{Vairamuthu and Dr.S.Sekar}
+
+\title{Cross-Attentive Multi-Modal Framework for Deepfake Identification and Forgery Interval Localization}
+
+\author{Vairamuthu N\affilnum{1} and Dr. Sekar S\affilnum{2}}
+
+\affiliation{
+\affilnum{1}M.Tech., Data Science, PG Student, Department of Information Technology, SRM Valliammai Engineering College, India.\\
+\affilnum{2}Associate Professor, Department of Information Technology, SRM Valliammai Engineering College, India.
+}
+
+\corrauth{Vairamuthu N, 
+Department of Information Technology, 
+SRM Valliammai Engineering College, 
+Kattankulathur, Tamil Nadu, India.}
+
+\email{vairamuthumani06@gmail.com}
+
+\begin{abstract}
+With the rapid advancements in generative AI technology, the creation of hyper-realistic deepfake videos has become possible, which in turn, could be used to propagate disinformation and undermine trust in digital content. Most of the existing detection methods focus on unimodal features, which suffer from cross-modal and temporal inconsistencies. In this work, I propose a cross-attentive multi-modal deepfake detection framework which embraces the spatial-temporal and frame-level audio-visual canonical representations. For inter-modal alignment, the model integrates cross-attention for video and audio manipulations, contrastive video encoding, and squeeze-and-excitation audio encoding. Also, to locate temporal boundaries, I propose an audio-visual timeline module for detecting deleted or inserted intervals. LAV-DF dataset evaluations confirm the proposed approach’s detection accuracy and robustness against manipulations.
+
+
+
+\end{abstract}
+
+\keywords{Deepfake detection, multi-modal learning, cross-attention, temporal localization, audio-visual analysis}
+
+\maketitle
+
+\section{Introduction}
+Deepfake technology, especially using GANs, remains one of the sophisticated tools to pose challenges to digital media videos and instill questions on the overall authenticity of the media. The ability to radically change a video narrative by altering facial expressions, voice, and embeddings makes it a potent disinformation and propaganda tool for political and cybercrime purposes.
+Despite the numerous methods developed, most techniques rely on detecting visual characteristics and clues, such as facial traits, inconsistencies in blending, or anomalies in temporal frames. Some systems analyze speech and locate inconsistencies and spectral distortions or other characteristics. However, isolating streams of audio or video often leads to failures in manipulations that are internally consistent within one stream, but range mismatches across 
+
+video and audio channels. For instance, the lips may move in a consistent and coherent pattern but may be unsynchronized to the speech that is underlying the audio.
+To address these, there is the emergence of the new generation multi-modal deepfake detection systems that integrate and utilize audio-visual stream deepfake detection cues. However, the existing techniques predominantly use sequential (early or late) strategies that weakly describe and analyze the cross-modal relationships one way. In addition, most techniques weakly incorporate fine-grained temporal localization, which leads to poor interpretability and real-world usefulness.
+We propose a cross-attentive multi-modal architecture that captures inter-modal relations and locates temporal forgeries. The main contributions of the paper are:
+\begin{itemize}
+   
+ 
+\item[a)]  a video encoder based on contrastive learning to help analyze and develop robust spatio-temporal records.
+\item[b)] An audio encoder that integrates squeeze-and-excitation mechanisms for the extraction of detailed audio features. 
+\item[c)] A cross-attention component that flexibly adjusts alignment and contrasts audio and visual stimulation.  
+\item[d)]  A temporal boundary mapping layer that accurately identifies and tracks the altered portions of the media stream.
+\end{itemize}
+
+
+\section{Related Works}
+The increasing realism of deepfake technologies has sparked wide-ranging research interests in media forensics. The early-stage responses mostly relied on lightweight convolutional networks and handcrafted features designed to analyze low-level manipulation artifacts. Afchar et al. [6] introduced MesoNet, a lightweight CNN that analyzes mesoscopic-level features to detect facial forgeries. At the same time, Guera and Delp [7] explored the use of recurrent neural networks (RNNs) for analyzing temporal contradictions, a pioneering effort in employing sequential dependencies to distract-and-forge video forgeries. Building on these foundations, Rossler et al. [8] introduced the FaceForensics++ dataset, which has turned into a benchmark standard for detection models due to the large-scale dataset offering high-quality manipulated and clean video samples, along with the breadth and variety of manipulation techniques.
+
+The key to advancements has been strong datasets. While FaceForensics++ set the groundwork, other datasets such as Celeb-DF [20] focused on more realistic manipulations with fewer visual artifacts, raising the bar for generalization. The DeepFake Detection Challenge (DFDC) dataset [9] offered more scene variants, both full and sample, which support large-scale competitions to assess the scalability of detection systems across different DF scenarios. These resources illustrate the importance of training on multiple datasets, and not relying solely on performance metrics from within a single dataset.
+
+The scope of detection methods has expanded to include behavior, biology, and geometric cues. Haliassos et al. [2] described the importance of lip synchronization, proposing that within manipulated content, the natural coordination of lips and speech is most likely absent. Wang et al. [21] focused on the gaps created by faulty facial landmarks, and Ciftci et al. [23] advanced the field with FakeCatcher, a method which captures subtle biological patterns of blood flow (PPG) within facial regions to differentiate real from synthetic content. These methods are particularly important as they rely on cues that generative models are most likely to struggle to fake convincingly.
+
+Deep learning models focus on specific applications such as forgery detection. Kolagati et al. [3] proposed a hybrid model that integrates MLP and CNN for forgery detection. Liu et al. [11] created TI2Net, a temporal identity inconsistency network, which effectively identifies subtle inconsistencies across video frames. Attention mechanisms have also been implemented: Yadav and Vishwakarma [12] developed adaptively weighted multi-scale attention features (AW-MSA), which automatically adjust to focus on areas that are most vulnerable to manipulation. Improving on this, Lu et al. [13] incorporated temporal–spatial features to CapsNet, further improving the model’s ability to capture the structural differences. Moving away from supervised approaches, Zhang et al. [14] focuses on unsupervised learning, while Larue et al. [15] created SeeABLE with contrastive learning and bounded differences. Additionally, Sun et al. [16] proposed contrastive pseudo learning to address the open-world problem of unseen manipulations. These publications indicate a growing focus on robust representation learning and flexible architectures.
+
+Another area of focus has been research on manipulations, particularly adversarial robustness and anti-forensics. Ding et al. [5] analyzes the use of adversarial training for creating detectable deep fakes and the impact that this has on anti-forensic techniques.highlighting the arms race between forensic and generative approaches. Boháček and Farid [4] examined mannerism cues, such as automatic facial expressions and speech mannerisms, and posited that behavioral biometrics provide an additional layer of security in particularly sensitive situations, such as the protection of political figures. Likewise, Zhu et al. [18] proposed recomposition techniques for detecting inter-frame inconsistencies, and Khan and Dang-Nguyen [19] conducted extensive analyses on generalization across models, datasets, and pre-training approaches, revealing substantial vulnerabilities of many detectors to previously unseen environments.   
+
+The construction of novel neural frameworks and their hybridization with older techniques have also been documented.  Arunkumar et al. [22] proposed a fuzzy Fisher capsule dual graph model, and Balasubramanian et al. [25] constructed a cascaded deep sparse autoencoder for more effective feature selection.  To bolster detection accuracy, Thaseen et al. [29] integrated additional CNN layers in a hybrid model, while Berrahal et al. [26] conducted a comparative analysis of multiple deep learning techniques aimed at forgery detection.Some authors have extended similar methods used in detecting deepfakes to other types of forgery such as counterfeit currency detection using a GAN–CNN–RNN hybrid framework [27] and detecting fake colorized images [30]. This demonstrates the versatility of approaches used in forgery detection.
+
+This field of study is expanding due to the impact of review and survey articles that provide overarching assessments. Verdoliva [1] was among the first to fully review deepfake forensics, framing it within the context of the societal impact and technical challenge. Malik et al. [28] provided a comparative analysis of methods for detecting images and videos, while Zanardelli et al. [32] surveyed the deep learning-based approaches to image forgery detection. Collectively, these works identify the gaps in the current systems, primarily in the areas of generalization, efficiency, and robustness against adaptive forgeries.
+
+The literature in deepfake detection has certainly made a paradigm shift. It has moved from the use of simple CNNs and designed cues to the more sophisticated, multimodal, and representation-based architectures. This has largely been made possible due to dataset contributions such as FaceForensics++, Celeb-DF, and DFDC. Current research is focusing on more advanced concepts such as cross-dataset generalization, unsupervised learning, biological signal processing, and anti-forensics. ven with these breakthroughs, obtaining strong, real-time, and universally applicable deepfake detection remains an unsolved problem, demonstrating the need for further progress in model construction and forensic analysis.  
+\section{METHODOLOGY}
+
+
+The overall system is outlined in Figure 4. During the processing of the video, each visual and audio stream is handled in parallel, and their features are aligned with cross attention. A multi-head self-attention module integrates features into a joint embedding, which is sent to a binary classifier to identify deepfake and genuine video and to a temporal boundary predictor for localization. A weighted sum of the contrastive/video loss, audio loss, boundary loss, and classification loss determines the final loss.
+\subsection{A. Input Representation}
+\noindent For the input video, we denote the frames as $V = \{v_1, v_2, \ldots, v_T\}$, where each $v_t$ is a video frame (RGB image). For synchronized audio, we denote the aligned audio segments as $A = \{a_1, a_2, \ldots, a_T\}$. In practice, the alignment $T$ is kept constant through sampling or cropping. Both streams are illustrated in Figure 1. Preprocessing (such as face alignment, mel-spectrogram extraction, etc.) is performed before feature encoding.
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\linewidth]{Picture1.jpg}
+        
+        \caption{\centering Input Videos}
+    \label{fig:placeholder}
+\end{figure}
+
+
+\subsection{B. Video Encoder with Contrastive Learning}
+
+\noindent A video encoder functions as a 3D convolutional network (with 3D ResNets as the base) and derives a spatio-temporal embedding $h_t^v = f_v(v_t; \theta_v)$ for every frame $t$ (and possible temporal context). We denote $H^v = \{h_1^v, h_2^v, \ldots, h_T^v\}$. Unlike a purely supervised encoder, we initially self-supervise this video network using a contrastive learning objective to make the representations discriminative. Specifically, for pairs of ``positive'' video clips (e.g., two augmented versions of the same video) with embeddings $h_i^v$ and $h_j^v$, we apply the InfoNCE loss. After this pretraining phase, the learned features undergo additional fine-tuning for the downstream binary classification task, as illustrated in Figure 2.
+\setlength{\abovedisplayshortskip}{0pt}
+
+{\scriptsize
+\begin{equation}
+L_v = \log \left(
+\frac{
+    \exp\!\left( \dfrac{\text{sim}(h_i^v, h_j^v)}{T} \right)
+}{
+    \displaystyle \sum_{k=1}^{N} \exp\!\left( \dfrac{\text{sim}(h_i^v, h_k^v)}{T} \right)
+    + \exp\!\left( \dfrac{\text{sim}(h_i^v, h_i^v)}{T} \right)
+}
+\right)
+\label{eq:Lv}
+\end{equation}
+}
+
+
+where $\text{sim}(\cdot, \cdot)$ denotes the cosine similarity function, $T$ is the temperature parameter, and the denominator computes the average over $N$ negative samples and one positive pair. This objective encourages embeddings from the same video clips to be closer in feature space while pushing apart embeddings from dissimilar clips. Such contrastive pretraining is known to yield both global and local video representations that generalize effectively to a wide range of applications, including deepfake detection, which remains our primary focus. We utilize the same encoder weights $\theta_t$ for generating frame-level embeddings.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Picture2.png}
+    \caption{\centering Binary classification}
+    \label{fig:placeholder}
+\end{figure}
+To obtain a video-level feature from frame representations, we apply a specific temporal pooling technique, either averaging or using a small RNN. This can be expressed mathematically as\( Z_v   =  \mathrm{Pool}(H^v) \)where  \( H^v \) represents the set of pooled outputs. One could use this feature for classification without incorporating any additional modalities. In our case, we perform cross-modal fusion before the final classification.
+
+\subsection{C. Audio Encoder with Squeeze-and-Excitation}
+
+\noindent To create an embedding $h_t^a = f_a(a_t; \theta_a)$, a lightweight CNN is applied over each audio frame (specifically, a set of 1D or 2D convolutional layers on patches of the audio spectrogram, as illustrated in Figure 3). A Squeeze-and-Excitation (SE) block is incorporated to refine frequency-channel importance.
+Given the feature map \( h_t^a \in \mathbb{R}^{C \times D} \), where $C$ is the number of channels, the SE block computes a channel descriptor $S_t \in \mathbb{R}^C$ through global average pooling followed by two fully connected layers:
+\begin{equation}
+s_t = \sigma \Big( W_2 \, \delta \big( W_1 \, \mathrm{Pool}(h_t^a) \big) \Big)
+\label{eq:se}
+\end{equation}
+\noindent $h_t^a$ was modified to scale each channel dependent on $S_t$. The output is 
+\(
+h_t^a \leftarrow S_t . \dot h_t^a
+\).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Picture4.png}
+    \caption{\centering Saved Frames(.png)}
+    \label{fig:placeholder}
+\end{figure}
+\noindent The SE block optimizes the audio network to focus on beneficial frequency patterns, such as those linked to voice spoofing. The generated audio embeddings $h_t^a$ form the set $H^a$, which corresponds to the visual features as well.
+
+
+
+\subsection{D.Cross-Attention Module}
+
+\noindent In order to compare and align the two different modalities, we have developed a cross-attention technique. The audio features will act as the keys and values, while the visual ones will serve as the queries. To this end, we will have:
+\begin{equation}
+Q = W^Q H^v, \quad K = W^K H^a, \quad V = W^V H^a
+\label{eq:3}
+\end{equation}
+
+with $H^v, H^a$ as the matrices of size $T \times d$, and $W^Q, W^K, W^V$ being the learned linear projection transforms. Lastly, the attention output is expressed as follows:
+\begin{equation}
+\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{Q K^\top}{\sqrt{d_k}}\right) V
+\label{eq:attention}
+\end{equation}
+ Every visual frame embedding will have ``attended'' to the audio frames. This results in a fused sequence of length $l$, given by
+\(
+H^{va} = \text{Attention}(Q, K, V)
+\)
+We further extend this by applying multi-head attention:
+\(
+H^{va} = \text{MultiHead}(H^v, H^a, H^a)
+\),
+where the heads are merged and subjected to a linear transformation. 
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Screenshot 2025-11-04 221701.png}
+    \caption{\centering Overall Architecture}
+    \label{fig:placeholder}
+\end{figure*}
+
+The cross-attention module effectively concentrates on the relevant audio segment for each video frame, such as when a frame shows a person's lips moving and the corresponding audio aligns with that frame. In our framework, we found that attending from video to audio is sufficient; however, in practice, this cross-attentive output captures joint cues from both streams quite effectively.
+
+
+
+\subsection{E. Fusion via Multi-Head Self-Attention}
+
+\noindent Self-attention is used next to fuse the cross-attended sequence $H^{va}$ with the original unimodal embeddings. We concatenate along the feature dimension to create a combined matrix $H^{\text{comb}} = [H^v; H^{va}; H^a]$. A Transformer-style multi-head self-attention block is used as follows:
+\footnotesize
+\begin{equation}
+H^f = \text{MultiHeadSelfAttn}(H^{\text{comb}}) = \text{Concat}(head_1,\dots,head_h) W^O \tag{5}
+\end{equation}
+\normalsize
+
+where each head calculates,
+{\footnotesize
+\begin{equation}
+\text{Head}_i = \text{Attention}(H^{\text{comb}} W_i^Q,\; H^{\text{comb}} W_i^K,\; H^{\text{comb}} W_i^V)
+\tag{6}
+\end{equation}
+\normalsize
+}
+The model is enabled to combine and reweight features across time and modalities. Contextual information from the surrounding video and audio is, in practice, incorporated into the joint vector $H_t^f$ centrally for each time $l$. Self-attention fusion guarantees that our final embedding integrates audio-visual cues instead of handling them separately.
+\subsection{F. Temporal Boundary Prediction}
+\noindent The fused sequence $H^f = H_1^f, \ldots, H_T^f$ gives us two outputs. For predicting the overall probability $P_{\text{fake}} = \sigma(w_c^T z_c)$, we first pool $H^f$ temporally (for example, average over $t$) to a single vector $z_c$. Afterward, we implement a linear layer and sigmoid function, producing a ``real vs.\ fake'' conclusion for the length of the clip. As for the forgeries’ localization, we predict boundary probabilities for every frame.  
+
+Using two learnable elements, described as $w_s$ and $w_e$, we derive the segmentation probabilities for a fake segment’s start or end at frame.
+\[
+P_t^{\text{start}} = \sigma(w_s^\top H_t^f), \quad 
+P_t^{\text{end}} = \sigma(w_e^\top H_t^f), \tag{7}
+\]
+These frame previsions enable the identification of intervals where manipulations take place. This boundary-based approach streamlines the process, contrasting the more common sliding-window proposals, and it has also proven to work well in temporal localization tasks. In this case, boundary predictions for start and end were trained using binary cross-entropy loss assigned to the respective true boundary labels.
+\subsection{G. Loss Function}
+\noindent The overall training loss is the weighted sum of the following components:  \\ 
+\textbf{The video contrastive loss $L_v$} is used during the pretraining phase of the video encoder.  \\
+\textbf{The audio classification loss $L_a$} is applied if there is an optional auxiliary audio-only classifier.  \\
+\textbf{The boundary loss $L_b$ }represents the binary cross-entropy between the actual start/end labels for each time step and the predicted $P_t^{\text{start}}$ and $P_t^{\text{end}}$.  \\
+\textbf{The classification loss $L_c$ }corresponds to the cross-entropy between $P^{\text{fake}}$ and the ground truth (real vs. fake)
+\(
+L = \lambda_v L_v + \lambda_a L_a + \lambda_b L_b + \lambda_c L_c
+\) in total.
+
+The loss weights \(\lambda \) are set in accordance with the goals of the project. Your network has been jointly trained with the multi-task curriculum to locate its temporal bounds precisely and decide if there are any forgeries.
+\subsection{H. VAF Extractor}
+\noindent The Visual Artifact Feature Extractor (VAF) illustrated in Figure5, deals with mediation analysis and tells the analyst the percentage of the overall effect that is funneled through the mediating variable. It assesses the extent of mediation by calculating the indirect effect in relation to the total effect, which is the sum of the direct and indirect effects. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Picture5.png}
+    \caption{\centering Landmark pointed face crop}
+    \label{fig:placeholder}
+\end{figure}
+The VAF is calculated using the following equation: 
+\[
+\text{VAF} = \frac{\text{Indirect Effect}}{\text{Direct Effect} + \text{Indirect Effect}}
+\tag{8}
+\]
+The Indirect Effect is the product of the coefficient of the path from independent variable (X) to mediator (M) and the coefficient of the path from mediator (M) to dependent variable (Y). The Direct Effect is the coefficient of the path from independent variable (X) to the dependent variable (Y) directly.
+
+VAF interpretation follows the guidelines and thresholds set from prior studies:
+\begin{itemize}
+    \item $VAF < 20\%$ $\rightarrow$ No mediation.
+    \item $20\% \leq VAF \leq 80\%$ $\rightarrow$ Partial mediation.
+    \item $VAF > 80\%$ $\rightarrow$ Complete mediation.
+\end{itemize}
+
+\subsection{I. Pseudo Labeling}
+As a semi-supervised learning technique, pseudo labeling enriches the training dataset by using model predictions for unlabeled data. The idea is to use the model's own predictions for unlabeled samples, as the system can generate pseudo labels for unlabeled samples without ground-truth annotations, as shown in Figure 6. These samples, which the model has pseudo labeled, can then be used to train the model in conjunction with the labeled data to improve training efficacy.
+
+For ease of explanation, let us use the following notation:
+\begin{itemize}
+    \item $D_L = \{(x_i, y_i)\}_{i=1}^{N_L}$: labeled dataset with $N_L$ samples.
+    \item $D_U = \{x_j\}_{j=1}^{N_U}$: unlabeled dataset with $N_U$ samples.
+    \item $f_\theta(x)$: model with parameters $\theta$.
+\end{itemize}
+
+The model predicts a label distribution over the unlabeled data by:
+\[
+P(y \mid x_j; \theta) = f_\theta(x_j) \tag{9}
+\]
+
+A pseudo label is assigned to the sample based on the class with the highest predicted probability, as shown in the equation:
+\[
+\hat{y}_j = \arg\max_{c \in C} P(y = c \mid x_j; \theta) \tag{10}
+\]
+Where $C$ is the set of possible classes (e.g., deepfake detection classes of real vs fake).
+The pseudo-labeled dataset now consists of:
+\[
+D_P = \{ (x_j, \hat{y}_j) \mid x_j \in D_U, \max P(y \mid x_j; \theta) \ge \tau \} \tag{11}
+\]
+In which $\tau$ denotes the confidence threshold that helps eliminate uncertain predictions.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Picture6.png}
+    \caption{\centering Pseudo-labeled clusters}
+    \label{fig:placeholder}
+\end{figure}
+The training objective combines pseudo-labeled loss with supervised loss, which consists of:
+\[
+\mathcal{L}(\theta) = \mathcal{L}_s(D_L; \theta) + \lambda \, \mathcal{L}_P(D_P; \theta) \tag{12}
+\]
+In this:
+\begin{itemize}
+    \item $\mathcal{L}_s$ is the supervised loss (e.g., cross-entropy on labeled data),
+    \item $\mathcal{L}_P$ is the pseudo-labeled loss,
+    \item $\lambda$ is a balancing coefficient.
+\end{itemize}
+
+
+\section{DATASETS AND EXPERIMENTAL SETUPS}
+ \subsubsection{\textbf{Dataset:}}We evaluate our method on the new Localized Audio-Visual DeepFake (LAV-DF) dataset, illustrated in Figure 7. LAV-DF is purposefully built for temporal localization of short content-based forgeries: a single clip includes one or more segments (audio, video, or both) that has been synthetically altered. The dataset employs a variety of sophisticated manipulation techniques (face reenactment, voice synthesis, etc.) and is larger than current multimodal benchmarks.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Picture7.png}
+    \caption{\centering Videos(.mp4)}
+    \label{fig:placeholder}
+\end{figure}
+In comparison, we note that past datasets (for instance, FaceForensics++) have 1,000 original videos with 4 manipulation techniques and $\sim$1.8M images, and Celeb-DF has 5,639 DeepFake celebrity videos, yet these datasets are primarily visual-only and lack precise boundary annotations. FakeAVCeleb and AVDeepfake-1M are other multimodal datasets, but the most difficult in terms of aligned content and localization is LAV-DF.
+
+
+\subsubsection{\textbf{Evaluation metrics:}}For assessing deepfake detection, we consider accuracy (binary classification) and AUC of the ROC curve for a global overview. For localization, we use the segment-level F1 score (predicted vs true intervals) and average precision (AP) with an IoU threshold. A high F1 or AP score indicates accurate boundary prediction. These metrics are analogous to those used in prior studies focused on temporal action localization, and on forgery detection.  
+
+We provide an explanation of the confusion matrix in Figure 8 that pertains to the predictions of the model for REAL versus FAKE video detection.  
+
+The model appears to perform well with respect to the detection of REAL videos and successfully trumped the beginner level of the task by identifying 86 of the 100 true REAL videos (TP for REAL is 86, FN for REAL is 14). We do see a higher rate of false REAL detections though, with 14 predicted as FAKE compared to those in the FAKE class. The model indeed has a good performance on the detection of FAKE videos, for which the true positive rate is 90 of the 100 FAKE videos (TP for FAKE is 90, FP for FAKE is 10). The false negative rate for FAKE videos (10 predicted as REAL) suggests that the model is somewhat more likely to miss a FAKE video compared to a REAL video.
+
+The evaluation of deepfake detection models is based on some basic classification metrics: precision, recall, and F1 score. Using these metrics captures the model's behavior on both classes, REAL and FAKE.  
+\begin{table}[htbp]
+\centering      
+\caption{\centering Performance measures}
+\setlength{\tabcolsep}{1pt} % reduce horizontal padding
+\renewcommand{\arraystretch}{1.1} % adjust row spacing
+
+\begin{tabular}{lccc}
+\hline
+\textbf{Class} & \textbf{Precision (\%)} & \textbf{Recall (\%)} & \textbf{F1-score (\%)} \\
+\hline
+Real & 0.86 & 0.86 & 0.86 \\
+Fake & 0.90 & 0.90 & 0.90 \\
+Macro average & 0.88 & 0.88 & 0.88 \\
+Weighted average & 0.88 & 0.88 & 0.88 \\
+\hline
+\end{tabular}
+
+\label{tab:performance_metrics}
+\end{table}
+
+
+The model's ability to detect REAL and FAKE videos is confirmed by the metrics of precision, recall, and F1 score all collapsing to the same class. Looking to the Table 1, precision of REAL videos is 0.86 and 0.90 for FAKE videos. This means the model classifying videos is more likely to be correct and is less likely to over classify the videos as the wrong class. The recall values of 0.86 for REAL and 0.90 for FAKE also demonstrates how the model captures most of the videos for all classes and the recall for the FAKE videos is slightly higher. The F1 score is also 0.86 and 0.90 for REAL and FAKE respectively, balancing precision and recall demonstrating the model’s ability to focus and maintain precision and recall for both classes. The model’s consistency across both classes is further confirmed by the 0.88 macro and weighted average for precision as well as for recall and F1 score higher than 0.88.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{Picture8.jpg}
+    \caption{\centering Confusion Matrix}
+    \label{fig:placeholder}
+\end{figure}
+
+
+
+As The results indicate, the model shows high ability in detecting and classifying REAL and FAKE videos in the given dataset, demonstrating a well balanced performance in false positive and false negative reduction.
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Picture9.png}
+    \caption{\centering t-SNE plot}
+    \label{fig:placeholder}
+\end{figure*}
+\\
+
+
+\subsubsection{\textbf{Implementation Details:}}Our framework is operational on PyTorch. The video encoder is initially pre-trained with contrastive weights, afterwards we fine-tune all components together. The audio CNN has minimal complexity (3-4 convolutional layers with Squeeze-and-Excitation) for real-time efficiency. We use the Adam optimizer with a learning rate of $1 \times 10^{-4}$, and train LAV-DF for between 50-100 epochs. 
+
+As part of our standard practice, we use data augmentations (noise, random cropping) during training. We leverage pretrained models when available, for example, we use a ResNet3D architecture as the video backbone, pretrained on extensive video recognition. Results are generated on a held out test set and the separability of real vs. fake embeddings is illustrated with a t-SNE plot (see Figure 9). 
+
+
+\section{RESULT AND ANALYSIS}
+We have outlined the evaluation of the implemented cross-attentive multimodal deepfake detection system with the aid of the LAV-DF and FaceForensics++ datasets. The goal of the evaluations was to determine the effectiveness of the system to detect and pinpoint induced manipulations within the videos based on the integrated analysis of the videos and the corresponding audio tracks. The system performed the tasks with the most consistent efficiency score with respect to a range of manipulation techniques, which was highlighted with the high Area Under the Curve (AUC) and precision score obtained during the tests. In addition, the proposed system’s ability to delineate and close manipulations along the temporal axis of the videos and provide explainable outputs constitutes a significant element of the system with respect to synthesized deepfake videos. The results of the evaluations indicate that the proposed method offers a solution that is more robust and explainable to deepfake detection.
+\subsubsection{\textbf{Detection Accuracy:}}Our cross-attentive model performs better than baseline models. In particular, it outperformed the video-only and audio-only models when it comes to both AUC and accuracy. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Picture11.jpg}
+    \caption{\centering Model Training}
+    \label{fig:placeholder}
+\end{figure}
+This demonstrates the advantage of cross-modal integration. For example, semantic inconsistencies (like asynchrony of lips and audio) are detectable in our combined representation, which unimodal classifiers are not able to capture. In terms of AUC, cross-attention surpasses previous late fusion approaches by an additional 5-10\%. Our performance even surpasses that of recent specialized architectures. For instance, Cai et al. 3D-CNN based BA-TFD+ model achieves extreme height in AP score on LAV-DF. Our model achieves similar or better performance in detection accuracy (frequently over 98\% AUC on subsets of LAV-DF). For context, CAD (a new cross-modal alignment model) achieved 99.96\% AUC on IDForge deepfake benchmark. As shown in Figure 10 (model training), shifting focuses LAV-DF let our model attain similarly robust AUC demonstrating successful utilization of vis-a-vis audio inconsistencies.
+
+
+\subsubsection{\textbf{Temporal Localization:} }The boundary mapping component encapsulated the mapping of the timing of underlying forgeries. In our experiments the start/end points predicted closely or exactly match the actual manipulated segments at the score performances of $ >$0.85 F1 and $ >$0.9 AP ( at IoU $\sim$0.5) on LAV-DF, which is a significant improvement over previously demonstrated baselines, which lacked locational boundaries (non-localizable) or the sliding window. Crossing 0.9 AP on LAV-DF is a significant improvement over baselines, which had no localizable boundaries or a sliding window in the first place.
+
+In Table 2, a comparison of the existing and proposed systems is given according to multiple parameters. The systems are different in terms of the training method, one consuming labeled data while the other is fed with unlabeled data. The existing method performs no data transformations, while the proposed method contains several approaches to augment the data. Regarding the system designs, the existing system uses classical designs, while the proposed system uses a more sophisticated feature extraction layer. 
+
+The output is clear and digestible thanks to the ability to pinpoint intervals: an analyst is informed not only if a video is a forgery, but also which specific frames are altered. This is in line with recent research trends of focusing on localized forgery detection. The cross-attention fusion is useful in this case by stressing sudden audio-visual transitions at the segment boundaries.
+\begin{table}[htbp]
+\raggedleft % align table to the right side of the column
+\small
+\caption{\centering Model Comparison}
+\label{tab:detection_accuracy}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.5}
+\resizebox{1.0\linewidth}{!}{
+
+\begin{tabular}{p{3.3cm} >{}p{1.0cm} >{}p{1.0cm}}
+\hline
+\textbf{Model} & \textbf{Without Enhancement (\%)} & \textbf{With Enhancement (\%)} \\
+\hline
+Existing Supervised Model (1000 Epochs) & 65.00 & 90.35 \\
+Proposed Unsupervised Model (200 Epochs) & 81.00 & 88.00 \\
+\hline
+\end{tabular}
+}
+\vspace{-2mm}
+\end{table}
+\\
+\subsubsection{\textbf{Testing on the Trained encoder:} }The trained encoder with Enhanced Contrastive Learning extracts features of the input frames. These features are K-means clustered, and each cluster is first classified as "real" or "fake" using Spearman correlation. High correlation clusters are classified as "real" while low correlation clusters are classified as "fake." After classification, the number of frames per cluster is counted.
+
+The label assigned to the video depends on the classification of the clusters. When the majority of frames from the video are classified in the “real” cluster, the video receives the label “real.” On the other hand, when the cluster is “fake,” the video is labeled “fake.” Following this, the video name, along with the corresponding label of “real” or “fake” is saved in a JSON file. This keeps the data organized and accessible for future use, as illustrated in Figure 11. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Picture12.jpg}
+    \caption{\centering True label assignment}
+    \label{fig:placeholder}
+\end{figure}
+To further evaluate the flexibility and solidness of the proposed deepfake detection framework, a cross dataset evaluation was conducted. Here, the proposed model was trained on a benchmark dataset and then tested on other unseen datasets to evaluate the model’s generalization capabilities across a wide range of datasets, levels of compression, and various manipulation techniques. In Table 3, a comparison with other deepfake detection models, including Xception, ResNet-50, EfficientNet-B4, and Vision Transformer (ViT-Base model) on the proposed model: Audio-Visual Fusion Model. The proposed model did indeed achieve the highest results with respect to and advanced to the most cross-dataset generalization on difficult deepfake detection scenarios achieving 92.1\%, 91.5\%, and 93.4\% on the accuracy, F1-score, and AUC respectively. The ability to generalize across challenging datasets has been greatly impacted with the model’s enhanced ability to capture discriminative spatiotemporal features due to the integration of multi-modal fusion and contrastive learning.
+
+\begin{table}[htbp]
+\raggedleft % move table to the right side if needed
+\scriptsize % reduce overall font size
+\caption{Performance Comparison on the Cross-Datasets}
+\label{tab:cross_dataset_comparison}
+\setlength{\tabcolsep}{2pt} % control horizontal padding
+\renewcommand{\arraystretch}{1.5} % tighter vertical spacing
+\begin{tabular}{lccc}
+\hline
+\textbf{Model} & \textbf{Accuracy (\%)} & \textbf{F1-Score (\%)} & \textbf{AUC (\%)} \\ 
+\hline
+Xception & 82.5 & 81.9 & 84.3 \\
+ResNet-50  & 85.2 & 84.7 & 87.1 \\
+EfficientNet-B4  & 87.6 & 86.9 & 88.4 \\
+ViT-Base & 89.0 & 88.5 & 90.2 \\
+{Proposed Audio-Visual Fusion Model} & {92.1} & {91.5} & {93.4} \\ 
+\hline
+\end{tabular}
+\vspace{-2mm}
+\end{table}
+
+
+\subsubsection{\textbf{Robustness:}}The model is able to maintain strong performance levels, even in adverse scenarios. Compression and noise in the testing videos (downs ampling LAV-DF clips) only have a moderate impact on performance in detection. Two factors likely contribute to this heightened performance: (A) the use of contrastive pretraining (with access to a large video dataset) to develop a robust, corruption resilient, generalized feature set and (B) the audio network SE blocks which enable the model to concentrate on precise masking even when some frequency masking is present. Rössler et al. noted that effective detection remains possible, even under extreme compression, due to domain-specific traits, which is in line with what we have observed. 
+
+In general, the use of attention- based fusion, combined with feature recalibration, helps the system be less susceptible to unimodal noise or corruption.
+
+\subsubsection{\textbf{Limitations: }}No framework is perfect. The model is heavier and more complex than single stream detectors due to the extra attention blocks and loss terms. It is harder to deploy in real-time unless the backbone is smaller or model pruning is done. The method also relies on well-synchronized audio and video input  loss or poor synchronization of audio means that the cross attention won't help and will confuse the model. The model assumes that some modality will be tampered with and videos that are solely synthetic with completely new audio may require different approaches. Our method works on the LAV-DF scenarios (brief, strategic cuts) but the effectiveness on longer videos or unknown manipulation types still needs to be explored.
+\section{FUTUREWORK}
+Building on this research project, future work can center on the cross-attentive multimodal deepfake detection system to encompass more complex large scale real world video datasets. The use of lightweight transformer based frameworks like Vision Transformers (ViT) and cross-modal transformers can increase the system performance and allow for real-time deployment with minimal computational costs. In addition, integrating a third modality like text transcripts produced through speech recognition or any associated metadata helps in developing contextual comprehension and strengthens detection. Another aspect worth pursuing is the potential beneficial use of large multimodal foundation models using various pre-training resources, as they might be able to generalize across unseen forgery types. On top of this, the use of adversarial and prototype-based contrastive learning techniques can be a pathway to model’s resilience to the new manipulation. Finally, future research can investigate effective pruning and quantization techniques to assist in the deployment of the system on low-resource mobile or edge computing.
+\section{CONCLUSION}
+In this work, we presented a cross-attentive multimodal methodology in the scope of deepfake detection and its temporal localization. Our model captures deepfake’s fine-grained artifacts and cross-domain mismatches. This is possible because we jointly encode the audio and video tracks and attend to them. On the LAV-DF benchmark, our methodology also outperforms unimodal baselines and contemporary multimodal deepfake detection through contrastive spatial-video and SE-audio encoders, which therapeutically augments the model’s representational capacity and bolstering detection accuracy and fake segment localization.
+
+Future studies will look at how this design can be adapted to real-world situations, including those with limited resources. For example, the latest innovations with video transformers and audio-visual pretrained models suggest possibilities to replace the CNN backbone with lightweight ViTs or a joint cross-modal Transformer. Other improvements suggested in the T-REC framework include employing transcripts (speech recognition) or other metadata as a third modality, or using large multimodal foundation models to provide additional contextual information. Moreover, prototype-based contrast or adversarial training (similar to some recent approaches) might be used to improve robustness at one’s disposal. We believe the combination of temporal boundary mapping with cross-attention and integration presented in this work provides a robust foundation for the development of next generation deepfake detectors in the multimodal space.
+
+
+\begin{acks}
+The authors would like to thank SRM Valliammai Engineering College (Anna University) for their continuous support, facilities, and encouragement in carrying out this research work on the Multi-Modal deepfake detection with cross-attention fusion and Temporal boundary mapping system. The guidance and constructive feedback from faculty members and project supervisors were invaluable in shaping the direction of this study.
+\end{acks}
+
+\subsection{\textbf{Funding Information}}
+The authors state that no external funding was involved in the development of this research work.
+\subsection{\textbf{Data Availability} }
+The data that support the findings of this study are openly available in the Deepfake detection Dataset on Kaggle at https://www.kaggle.com/datasets/tranhoangnamk18hcm/dfdc-trainpart0123/data
+
+\begin{thebibliography}{99}
+
+
+\bibitem{Verdoliva2020}
+Verdoliva L, “Media Forensics and DeepFakes: An Overview,” \textit{IEEE Journal on Selected Topics in Signal Processing}, 2020.  
+DOI: \href{https://doi.org/10.1109/JSTSP.2020.3002101}{10.1109/JSTSP.2020.3002101}.
+
+\bibitem{Haliassos2021}
+Haliassos A, Vougioukas K, Petridis S, Pantic M, “Lips Don't Lie: A Generalisable and Robust Approach to Face Forgery Detection,”  
+\textit{IEEE CVPR}, 2021.  
+DOI: \href{https://doi.org/10.1109/CVPR46437.2021.00500}{10.1109/CVPR46437.2021.00500}.
+
+\bibitem{Kolagati2022}
+Kolagati S, Priyadharshini T, Mary Anita Rajam V, “Exposing deepfakes using a deep multilayer perceptron–convolutional neural network model,”  
+\textit{International Journal of Information Management Data Insights}, 2022.  
+DOI: \href{https://doi.org/10.1016/j.jjimei.2021.100054}{10.1016/j.jjimei.2021.100054}.
+
+\bibitem{Bohacek2022}
+Boháček M, Farid H, “Protecting world leaders against deep fakes using facial, gestural, and vocal mannerisms,”  
+\textit{PNAS}, 2022.  
+DOI: \href{https://doi.org/10.1073/pnas.2216035119}{10.1073/pnas.2216035119}.
+
+\bibitem{Ding2022}
+Ding F, Zhu G, Li Y, Zhang X, Atrey P.K, Lyu S, “Anti-Forensics for Face Swapping Videos via Adversarial Training,”  
+\textit{IEEE Transactions on Multimedia}, 2022.  
+DOI: \href{https://doi.org/10.1109/TMM.2021.3098422}{10.1109/TMM.2021.3098422}.
+
+\bibitem{Afchar2018}
+Afchar D, Nozick V, Yamagishi J, Echizen I, “MesoNet: A compact facial video forgery detection network,”  
+\textit{IEEE WIFS}, 2018.  
+DOI: \href{https://doi.org/10.1109/WIFS.2018.8630761}{10.1109/WIFS.2018.8630761}.
+
+\bibitem{Guera2018}
+Guera D, Delp E.J, “Deepfake Video Detection Using Recurrent Neural Networks,”  
+\textit{IEEE AVSS}, 2018.  
+DOI: \href{https://doi.org/10.1109/AVSS.2018.8639163}{10.1109/AVSS.2018.8639163}.
+
+\bibitem{Rossler2019}
+Rossler A, Cozzolino D, Verdoliva L, Riess C, Thies J, Niessner M, “FaceForensics++: Learning to detect manipulated facial images,”  
+\textit{IEEE ICCV}, 2019.  
+DOI: \href{https://doi.org/10.1109/ICCV.2019.00009}{10.1109/ICCV.2019.00009}.
+
+\bibitem{Lamichhane2022}
+Lamichhane B, Thapa K, Yang S, “Detection of Image Level Forgery with Various Constraints Using DFDC Full and Sample Datasets,”  
+\textit{Sensors}, 2022.  
+DOI: \href{https://doi.org/10.3390/s22239121}{10.3390/s22239121}.
+
+\bibitem{Ge2022}
+Ge S, Lin F, Li C, Zhang D, Wang W, Zeng D, “Deepfake Video Detection via Predictive Representation Learning,”  
+\textit{ACM TOMM}, 2022.  
+DOI: \href{https://doi.org/10.1145/3536426}{10.1145/3536426}.
+
+\bibitem{Liu2023}
+Liu B, Ding M, Zhu T, Yu X, “TI2Net: Temporal Identity Inconsistency Network for Deepfake Detection,”  
+\textit{IEEE WACV}, 2023.  
+DOI: \href{https://doi.org/10.1109/WACV56688.2023.00467}{10.1109/WACV56688.2023.00467}.
+
+\bibitem{Yadav2024}
+Yadav A, Vishwakarma D.K, “AW-MSA: Adaptively weighted multi-scale attentional features for DeepFake detection,”  
+\textit{Engineering Applications of Artificial Intelligence}, 2024.  
+DOI: \href{https://doi.org/10.1016/j.engappai.2023.107443}{10.1016/j.engappai.2023.107443}.
+
+\bibitem{Lu2023}
+Lu T, Bao Y, Li L, “Deepfake Video Detection Based on Improved CapsNet and Temporal–Spatial Features,”  
+\textit{Computers, Materials and Continua}, 2023.  
+DOI: \href{https://doi.org/10.32604/cmc.2023.034963}{10.32604/cmc.2023.034963}.
+
+\bibitem{Zhang2023}
+Zhang L, Qiao T, Xu M, Zheng N, Xie S, “Unsupervised Learning-Based Framework for Deepfake Video Detection,”  
+\textit{IEEE Transactions on Multimedia}, 2023.  
+DOI: \href{https://doi.org/10.1109/TMM.2022.3182509}{10.1109/TMM.2022.3182509}.
+
+\bibitem{Larue2023}
+Larue N, Vu N.S, Struc V, Peer P, Christophides V, “SeeABLE: Soft Discrepancies and Bounded Contrastive Learning for Exposing Deepfakes,”  
+\textit{IEEE ICCV}, 2023.  
+DOI: \href{https://doi.org/10.1109/ICCV51070.2023.01921}{10.1109/ICCV51070.2023.01921}.
+
+\bibitem{Sun2023}
+Sun Z, Chen S, Yao T, Yin B, Yi R, Ding S, Ma L, “Contrastive Pseudo Learning for Open-World DeepFake Attribution,”  
+\textit{IEEE ICCV}, 2023.  
+DOI: \href{https://doi.org/10.1109/ICCV51070.2023.01909}{10.1109/ICCV51070.2023.01909}.
+
+\bibitem{Ge2022}
+Ge, S., Lin, F., Li, C., Zhang, D., Wang, W., and Zeng, D.  
+``Deepfake Video Detection via Predictive Representation Learning,''  
+\textit{ACM Transactions on Multimedia Computing, Communications and Applications}, 2022.  
+\href{https://doi.org/10.1145/3536426}{doi:10.1145/3536426}.
+
+\bibitem{Zhu2024}
+Zhu C, Zhang B, Yin Q, Yin C, Lu W, “Deepfake detection via inter-frame inconsistency recomposition and enhancement,”  
+\textit{Pattern Recognition}, 2024.  
+DOI: \href{https://doi.org/10.1016/j.patcog.2023.110077}{10.1016/j.patcog.2023.110077}.
+
+\bibitem{Khan2024}
+Khan S.A, Dang-Nguyen D.T, “Deepfake Detection: Analyzing Model Generalization Across Architectures, Datasets, and Pre-Training Paradigms,”  
+\textit{IEEE Access}, 2024.  
+DOI: \href{https://doi.org/10.1109/ACCESS.2023.3348450}{10.1109/ACCESS.2023.3348450}.
+
+\bibitem{Li2020}
+Li Y, Yang X, Sun P, Qi H, Lyu S, “Celeb-DF: A Large-Scale Challenging Dataset for DeepFake Forensics,”  
+\textit{IEEE CVPR}, 2020.  
+DOI: \href{https://doi.org/10.1109/CVPR42600.2020.00327}{10.1109/CVPR42600.2020.00327}.
+
+\bibitem{Wang2022}
+Wang G, Jiang Q, Jin X, Cui X, “FFR\_FD: Effective and fast detection of DeepFakes via feature point defects,”  
+\textit{Information Sciences}, 2022.  
+DOI: \href{https://doi.org/10.1016/j.ins.2022.03.026}{10.1016/j.ins.2022.03.026}.
+
+\bibitem{Arunkumar2022}
+Arunkumar P.M, Sangeetha Y, Raja P.V, Sangeetha S.N, “Deep Learning for Forgery Face Detection Using Fuzzy Fisher Capsule Dual Graph,”  
+\textit{Information Technology and Control}, 2022.  
+DOI: \href{https://doi.org/10.5755/j01.itc.51.3.31510}{10.5755/j01.itc.51.3.31510}.
+
+\bibitem{Ciftci2023}
+Ciftci U.A, Demir I, Yin L, “FakeCatcher: Detection of Synthetic Portrait Videos using Biological Signals,”  
+\textit{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 2023.  
+DOI: \href{https://doi.org/10.1109/TPAMI.2020.3009287}{10.1109/TPAMI.2020.3009287}.
+
+\bibitem{Suganthi2022}
+Suganthi S.T, Ayoobkhan M.U.A, Kumar V.K, Bacanin N, Venkatachalam K, Stepán H, Pavel T, “Deep learning model for deep fake face recognition and detection,”  
+\textit{PeerJ Computer Science}, 2022.  
+DOI: \href{https://doi.org/10.7717/PEERJ-CS.881}{10.7717/PEERJ-CS.881}.
+
+\bibitem{Balasubramanian2022}
+Balasubramanian S.B, Kannan R.J, Prabu P, Venkatachalam K, Trojovský P, “Deep fake detection using cascaded deep sparse auto-encoder for effective feature selection,”  
+\textit{PeerJ Computer Science}, 2022.  
+DOI: \href{https://doi.org/10.7717/peerj-cs.1040}{10.7717/peerj-cs.1040}.
+
+\bibitem{Berrahal2023}
+Berrahal M, Boukabous M, Yandouzi M, Grari M, Idrissi I, “Investigating the effectiveness of deep learning approaches for deep fake detection,”  
+\textit{Bulletin of Electrical Engineering and Informatics}, 2023.  
+DOI: \href{https://doi.org/10.11591/eei.v12i6.6221}{10.11591/eei.v12i6.6221}.
+
+\bibitem{Antonius2023}
+Antonius F, Ramu J, Sasikala P, Sekhar J.C, Mary S.S.C, “DeepCyberDetect: Hybrid AI for Counterfeit Currency Detection with GAN-CNN-RNN using African Buffalo Optimization,”  
+\textit{IJACSA}, 2023.  
+DOI: \href{https://doi.org/10.14569/IJACSA.2023.0140772}{10.14569/IJACSA.2023.0140772}.
+
+\bibitem{Malik2022}
+Malik A, Kuribayashi M, Abdullahi S.M, Khan A.N, “DeepFake Detection for Human Face Images and Videos: A Survey,”  
+\textit{IEEE Access}, 2022.  
+DOI: \href{https://doi.org/10.1109/ACCESS.2022.3151186}{10.1109/ACCESS.2022.3151186}.
+
+\bibitem{Thaseen2023}
+Thaseen Ikram S, V.P, Chambial S, Sood D, V.A, “A Performance Enhancement of Deepfake Video Detection through the use of a Hybrid CNN Deep Learning Model,”  
+\textit{International Journal of Electrical and Computer Engineering Systems}, 2023.  
+DOI: \href{https://doi.org/10.32985/ijeces.14.2.6}{10.32985/ijeces.14.2.6}.
+
+\bibitem{Salman2023}
+Salman K.A, Shaker K, Al-Janabi S, “Fake Colorized Image Detection Approaches: A Review,”  
+\textit{International Journal of Image and Graphics}, 2023.  
+DOI: \href{https://doi.org/10.1142/S021946782350050X}{10.1142/S021946782350050X}.
+
+\bibitem{Sharma2022}
+Sharma J, Sharma S, Kumar V, Hussein H.S, Alshazly H, “Deepfakes Classification of Faces Using Convolutional Neural Networks,”  
+\textit{Traitement du Signal}, 2022.  
+DOI: \href{https://doi.org/10.18280/ts.390330}{10.18280/ts.390330}.
+
+\bibitem{Zanardelli2022}
+Zanardelli M, Guerrini F, Leonardi R, Adami N, “Image forgery detection: a survey of recent deep-learning approaches,”  
+\textit{Multimedia Tools and Applications}, 2022.  
+DOI: \href{https://doi.org/10.1007/s11042-022-13797-w}{10.1007/s11042-022-13797-w}.
+
+
+\end{thebibliography}
+\end{document}
